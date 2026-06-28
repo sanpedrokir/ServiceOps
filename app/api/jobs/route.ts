@@ -1,6 +1,6 @@
 import { getSession } from '@/lib/auth'
 import { db, dbSave, nextSequence } from '@/lib/db'
-import { Job } from '@/lib/types'
+import type { Job } from '@/lib/types'
 import { generateId } from '@/lib/utils'
 
 export async function GET(request: Request) {
@@ -13,18 +13,14 @@ export async function GET(request: Request) {
   const date = searchParams.get('date')
   const customerId = searchParams.get('customerId')
 
-  let jobs = db().jobs.filter(j => j.companyId === session.companyId)
+  const database = await db(session.companyId)
+  let jobs = database.jobs
 
-  if (session.role === 'technician') {
-    jobs = jobs.filter(j => j.assignedTechnicians.includes(session.sub))
-  }
-
+  if (session.role === 'technician') jobs = jobs.filter(j => j.assignedTechnicians.includes(session.sub))
   if (status) jobs = jobs.filter(j => j.status === status)
   if (techId) jobs = jobs.filter(j => j.assignedTechnicians.includes(techId))
   if (date) jobs = jobs.filter(j => j.appointmentDate === date)
   if (customerId) jobs = jobs.filter(j => j.customerId === customerId)
-
-  jobs = jobs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
   return Response.json(jobs)
 }
@@ -32,14 +28,14 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const session = await getSession()
   if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!['owner', 'admin', 'dispatcher'].includes(session.role)) {
-    return Response.json({ error: 'Forbidden' }, { status: 403 })
-  }
+  if (!['owner', 'admin', 'dispatcher'].includes(session.role)) return Response.json({ error: 'Forbidden' }, { status: 403 })
 
   const body = await request.json()
-  const seq = nextSequence('job')
-  const database = db()
-  const company = database.companies.find(c => c.id === session.companyId)
+  const [seq, database] = await Promise.all([
+    nextSequence(session.companyId, 'job'),
+    db(session.companyId),
+  ])
+  const company = database.companies[0]
 
   const now = new Date().toISOString()
   const job: Job = {
@@ -54,7 +50,7 @@ export async function POST(request: Request) {
     jobType: body.jobType || 'repair',
     tradeType: body.tradeType || 'aircon',
     priority: body.priority || 'normal',
-    status: 'scheduled',
+    status: body.assignedTechnicians?.length ? 'assigned' : 'scheduled',
     title: body.title,
     description: body.description,
     appointmentDate: body.appointmentDate,
@@ -72,10 +68,6 @@ export async function POST(request: Request) {
     updatedAt: now,
   }
 
-  if (job.assignedTechnicians.length > 0) job.status = 'assigned'
-
-  const allJobs = [...database.jobs, job]
-  dbSave({ jobs: allJobs })
-
+  await dbSave({ jobs: [job] })
   return Response.json(job, { status: 201 })
 }

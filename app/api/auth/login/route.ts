@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import bcrypt from 'bcryptjs'
-import { db } from '@/lib/db'
+import { getUserByEmail } from '@/lib/db'
 import { createToken, COOKIE_NAME } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
@@ -11,8 +11,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: 'Email and password required' }, { status: 400 })
     }
 
-    const database = db()
-    const user = database.users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.isActive)
+    const user = await getUserByEmail(email)
 
     if (!user) {
       return Response.json({ error: 'Invalid credentials' }, { status: 401 })

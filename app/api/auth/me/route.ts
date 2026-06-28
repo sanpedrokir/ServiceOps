@@ -5,9 +5,9 @@ export async function GET() {
   const session = await getSession()
   if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const database = db()
+  const database = await db(session.companyId)
   const user = database.users.find(u => u.id === session.sub)
-  const company = database.companies.find(c => c.id === session.companyId)
+  const company = database.companies[0]
 
   if (!user) return Response.json({ error: 'User not found' }, { status: 404 })
 

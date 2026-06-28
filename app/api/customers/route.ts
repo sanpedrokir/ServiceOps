@@ -1,14 +1,13 @@
 import { getSession } from '@/lib/auth'
 import { db, dbSave } from '@/lib/db'
-import { Customer } from '@/lib/types'
+import type { Customer } from '@/lib/types'
 import { generateId } from '@/lib/utils'
 
 export async function GET() {
   const session = await getSession()
   if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const customers = db().customers.filter(c => c.companyId === session.companyId)
-  return Response.json(customers)
+  const database = await db(session.companyId)
+  return Response.json(database.customers)
 }
 
 export async function POST(request: Request) {
@@ -19,18 +18,10 @@ export async function POST(request: Request) {
   const body = await request.json()
   const now = new Date().toISOString()
   const customer: Customer = {
-    id: generateId(),
-    companyId: session.companyId,
-    name: body.name,
-    mobile: body.mobile,
-    email: body.email,
-    billingAddress: body.billingAddress,
-    customerType: body.customerType || 'residential',
-    notes: body.notes,
-    createdAt: now,
+    id: generateId(), companyId: session.companyId, name: body.name,
+    mobile: body.mobile, email: body.email, billingAddress: body.billingAddress,
+    customerType: body.customerType || 'residential', notes: body.notes, createdAt: now,
   }
-
-  const database = db()
-  dbSave({ customers: [...database.customers, customer] })
+  await dbSave({ customers: [customer] })
   return Response.json(customer, { status: 201 })
 }

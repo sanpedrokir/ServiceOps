@@ -5,14 +5,13 @@ export async function GET() {
   const session = await getSession()
   if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const database = db()
-  const cId = session.companyId
+  const database = await db(session.companyId)
   const today = new Date().toISOString().split('T')[0]
 
-  const jobs = database.jobs.filter(j => j.companyId === cId)
-  const invoices = database.invoices.filter(i => i.companyId === cId)
-  const quotes = database.quotes.filter(q => q.companyId === cId)
-  const leads = database.leads.filter(l => l.companyId === cId)
+  const jobs = database.jobs
+  const invoices = database.invoices
+  const quotes = database.quotes
+  const leads = database.leads
 
   const todayJobs = jobs.filter(j => j.appointmentDate === today)
   const completedToday = todayJobs.filter(j => j.status === 'completed')
@@ -20,8 +19,7 @@ export async function GET() {
   const urgentJobs = jobs.filter(j => j.priority === 'urgent' && !['completed', 'cancelled', 'paid'].includes(j.status))
   const unassigned = jobs.filter(j => j.status === 'scheduled' && j.assignedTechnicians.length === 0)
 
-  const thisMonth = new Date()
-  const startOfMonth = new Date(thisMonth.getFullYear(), thisMonth.getMonth(), 1).toISOString()
+  const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
   const monthPaidInvoices = invoices.filter(i => i.paymentStatus === 'paid' && i.paidAt && i.paidAt >= startOfMonth)
   const revenueThisMonth = monthPaidInvoices.reduce((sum, i) => sum + i.total, 0)
 
@@ -35,7 +33,7 @@ export async function GET() {
   const totalQuotes = quotes.filter(q => q.status !== 'draft').length
   const conversionRate = totalQuotes > 0 ? Math.round((approvedQuotes / totalQuotes) * 100) : 0
 
-  const technicians = database.users.filter(u => u.companyId === cId && u.role === 'technician' && u.isActive)
+  const technicians = database.users.filter(u => u.role === 'technician' && u.isActive)
   const techStats = technicians.map(t => {
     const assigned = jobs.filter(j => j.assignedTechnicians.includes(t.id))
     const completedCount = assigned.filter(j => ['completed', 'invoiced', 'paid'].includes(j.status)).length

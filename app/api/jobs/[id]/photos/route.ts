@@ -9,8 +9,8 @@ export async function POST(request: Request, ctx: RouteContext<'/api/jobs/[id]/p
   if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await ctx.params
-  const database = db()
-  const job = database.jobs.find(j => j.id === id && j.companyId === session.companyId)
+  const database = await db(session.companyId)
+  const job = database.jobs.find(j => j.id === id)
   if (!job) return Response.json({ error: 'Not found' }, { status: 404 })
 
   const formData = await request.formData()
@@ -32,23 +32,13 @@ export async function POST(request: Request, ctx: RouteContext<'/api/jobs/[id]/p
     if (!existsSync(uploadDir)) mkdirSync(uploadDir, { recursive: true })
     writeFileSync(join(uploadDir, filename), buffer)
   } catch {
-    // Serverless environment — store as base64 data URL instead
     const b64 = buffer.toString('base64')
     photoUrl = `data:image/${ext === 'jpg' ? 'jpeg' : ext};base64,${b64}`
   }
 
-  const photo: Photo = {
-    id: photoId,
-    url: photoUrl,
-    caption,
-    tag,
-    takenAt: new Date().toISOString(),
-  }
-
-  const photos = [...(job.photos || []), photo]
-  const jobs = database.jobs.map(j => j.id === id ? { ...j, photos, updatedAt: new Date().toISOString() } : j)
-  dbSave({ jobs })
-
+  const photo: Photo = { id: photoId, url: photoUrl, caption, tag, takenAt: new Date().toISOString() }
+  const updated = { ...job, photos: [...(job.photos || []), photo], updatedAt: new Date().toISOString() }
+  await dbSave({ jobs: [updated] })
   return Response.json(photo)
 }
 
@@ -59,13 +49,11 @@ export async function DELETE(request: Request, ctx: RouteContext<'/api/jobs/[id]
   const { id } = await ctx.params
   const { photoId } = await request.json()
 
-  const database = db()
-  const job = database.jobs.find(j => j.id === id && j.companyId === session.companyId)
+  const database = await db(session.companyId)
+  const job = database.jobs.find(j => j.id === id)
   if (!job) return Response.json({ error: 'Not found' }, { status: 404 })
 
-  const photos = (job.photos || []).filter(p => p.id !== photoId)
-  const jobs = database.jobs.map(j => j.id === id ? { ...j, photos, updatedAt: new Date().toISOString() } : j)
-  dbSave({ jobs })
-
+  const updated = { ...job, photos: (job.photos || []).filter(p => p.id !== photoId), updatedAt: new Date().toISOString() }
+  await dbSave({ jobs: [updated] })
   return Response.json({ ok: true })
 }
