@@ -25,14 +25,21 @@ export async function POST(request: Request, ctx: RouteContext<'/api/jobs/[id]/p
   const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
   const photoId = `ph_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
   const filename = `${photoId}.${ext}`
-  const uploadDir = join(process.cwd(), 'public', 'uploads', 'jobs', id)
 
-  if (!existsSync(uploadDir)) mkdirSync(uploadDir, { recursive: true })
-  writeFileSync(join(uploadDir, filename), buffer)
+  let photoUrl = `/uploads/jobs/${id}/${filename}`
+  try {
+    const uploadDir = join(process.cwd(), 'public', 'uploads', 'jobs', id)
+    if (!existsSync(uploadDir)) mkdirSync(uploadDir, { recursive: true })
+    writeFileSync(join(uploadDir, filename), buffer)
+  } catch {
+    // Serverless environment — store as base64 data URL instead
+    const b64 = buffer.toString('base64')
+    photoUrl = `data:image/${ext === 'jpg' ? 'jpeg' : ext};base64,${b64}`
+  }
 
   const photo: Photo = {
     id: photoId,
-    url: `/uploads/jobs/${id}/${filename}`,
+    url: photoUrl,
     caption,
     tag,
     takenAt: new Date().toISOString(),
