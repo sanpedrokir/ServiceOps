@@ -222,7 +222,10 @@ export async function POST(request: Request) {
     },
   ]
 
-  // Seed sequences
+  // Insert in FK dependency order: company → users/customers → sites → assets/leads → jobs → quotes → invoices
+  await dbSave({ companies: [company] })
+
+  // Sequences depend on company
   await sql`
     INSERT INTO sequences (company_id, key, value) VALUES
     (${companyId}, 'job', 1005),
@@ -230,9 +233,6 @@ export async function POST(request: Request) {
     (${companyId}, 'invoice', 1001)
     ON CONFLICT (company_id, key) DO UPDATE SET value = EXCLUDED.value
   `
-
-  // Insert in FK dependency order: company → users/customers → sites → assets/leads → jobs → quotes → invoices
-  await dbSave({ companies: [company] })
   await dbSave({ users, customers })
   await dbSave({ sites, checklistTemplates })
   await dbSave({ assets, leads })
