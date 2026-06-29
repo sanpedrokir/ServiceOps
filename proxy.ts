@@ -3,7 +3,7 @@ import { jwtVerify } from 'jose'
 
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'serviceops-secret-key-2026-change-in-prod')
 
-const PUBLIC_PATHS = ['/login', '/api/auth/login', '/api/auth/logout']
+const PUBLIC_PATHS = ['/login', '/api/auth/login', '/api/auth/logout', '/api/seed']
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
