@@ -10,6 +10,19 @@ export type QuoteStatus = 'draft' | 'sent' | 'viewed' | 'approved' | 'rejected' 
 export type InvoiceStatus = 'draft' | 'sent' | 'partially_paid' | 'paid' | 'overdue' | 'cancelled'
 export type PaymentMethod = 'paynow' | 'bank_transfer' | 'cash' | 'card' | 'cheque'
 
+export interface Certification {
+  id: string
+  companyId: string
+  userId: string
+  name: string
+  certNumber?: string
+  issuingBody?: string
+  issuedDate?: string
+  expiryDate?: string
+  notes?: string
+  createdAt: string
+}
+
 export interface Company {
   id: string
   name: string

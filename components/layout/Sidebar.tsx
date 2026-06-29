@@ -4,7 +4,8 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Briefcase, Users, MapPin, Cpu, FileText,
-  Receipt, Settings, UserCog, PhoneIncoming, X, Zap, ClipboardList
+  Receipt, Settings, UserCog, PhoneIncoming, X, Zap, ClipboardList,
+  Wrench, Clock, Shield
 } from 'lucide-react'
 
 const nav = [
@@ -14,12 +15,15 @@ const nav = [
   { href: '/customers', label: 'Customers', icon: Users },
   { href: '/sites', label: 'Sites', icon: MapPin },
   { href: '/assets', label: 'Assets', icon: Cpu },
+  { href: '/maintenance', label: 'Maintenance', icon: Wrench },
   { href: '/quotes', label: 'Quotations', icon: FileText },
   { href: '/invoices', label: 'Invoices', icon: Receipt },
+  { href: '/timesheets', label: 'Timesheets', icon: Clock },
 ]
 
 const settingsNav = [
   { href: '/checklists', label: 'Checklists', icon: ClipboardList },
+  { href: '/certifications', label: 'Certifications', icon: Shield },
   { href: '/users', label: 'Users & Roles', icon: UserCog },
   { href: '/settings', label: 'Company Settings', icon: Settings },
 ]
