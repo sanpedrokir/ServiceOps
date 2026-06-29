@@ -231,7 +231,14 @@ export async function POST(request: Request) {
     ON CONFLICT (company_id, key) DO UPDATE SET value = EXCLUDED.value
   `
 
-  await dbSave({ companies: [company], users, customers, sites, assets, leads, jobs, quotes, invoices, checklistTemplates })
+  // Insert in FK dependency order: company → users/customers → sites → assets/leads → jobs → quotes → invoices
+  await dbSave({ companies: [company] })
+  await dbSave({ users, customers })
+  await dbSave({ sites, checklistTemplates })
+  await dbSave({ assets, leads })
+  await dbSave({ jobs })
+  await dbSave({ quotes })
+  await dbSave({ invoices })
 
   return Response.json({
     ok: true,
