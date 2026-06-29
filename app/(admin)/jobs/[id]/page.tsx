@@ -2,7 +2,7 @@
 import { useState, useEffect, use } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, MapPin, Phone, Clock, User, CheckSquare, Wrench, AlertTriangle, Camera, FileText, Edit, ChevronDown } from 'lucide-react'
+import { ArrowLeft, MapPin, Phone, Clock, User, CheckSquare, Wrench, AlertTriangle, FileText, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
@@ -101,9 +101,15 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
             <span className="text-sm text-gray-500">{JOB_TYPE_LABELS[job.jobType]}</span>
           </div>
         </div>
-        <span className={`text-sm px-3 py-1 rounded-full font-medium ${statusColor}`}>
-          {JOB_STATUS_LABELS[job.status]}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className={`text-sm px-3 py-1 rounded-full font-medium ${statusColor}`}>
+            {JOB_STATUS_LABELS[job.status]}
+          </span>
+          <Link href={`/jobs/${id}/report`}
+            className="flex items-center gap-1.5 text-sm text-blue-600 border border-blue-200 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-full font-medium transition-colors">
+            <FileText className="w-3.5 h-3.5" /> Report
+          </Link>
+        </div>
       </div>
 
       {nextStatuses.length > 0 && (

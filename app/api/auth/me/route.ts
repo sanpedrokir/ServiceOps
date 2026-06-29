@@ -13,6 +13,10 @@ export async function GET() {
 
   return Response.json({
     user: { id: user.id, name: user.name, email: user.email, role: user.role, companyId: user.companyId, phone: user.phone },
-    company: company ? { id: company.id, name: company.name, currency: company.currency } : null,
+    company: company ? {
+      id: company.id, name: company.name, currency: company.currency,
+      address: company.address, phone: company.phone, email: company.email,
+      warrantyPeriod: company.warrantyPeriod, paymentTerms: company.paymentTerms, uen: company.uen,
+    } : null,
   })
 }
